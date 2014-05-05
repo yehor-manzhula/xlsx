@@ -1,0 +1,6 @@
+{{{xmlDocType}}}
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    {{#relations}}
+        <Relationship Id="rId{{id}}" Type="{{{type}}}" Target="{{{target}}}"/>
+    {{/relations}}
+</Relationships>

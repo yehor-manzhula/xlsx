@@ -1,0 +1,27 @@
+{{{xmlDocType}}}
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+    <dimension ref="{{dimension}}" />
+    <sheetViews>
+        <sheetView tabSelected="1" workbookViewId="0"/>
+    </sheetViews>
+    <sheetFormatPr defaultRowHeight="15"/>
+    <sheetData>
+        {{#rows}}
+        <row r="{{rowId}}" ht="{{height}}" spans="{{spansDimension}}">
+            {{#columns}}
+            <c r="{{cellName}}" s="{{styleId}}" t="{{type}}">
+                <v>{{value}}</v>
+            </c>
+            {{/columns}}
+        </row>
+        {{/rows}}
+    </sheetData>
+    <printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false" />
+    <pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.511805555555555" footer="0.511805555555555" />
+    <pageSetup blackAndWhite="false" cellComments="none" copies="1" draft="false" firstPageNumber="0" fitToHeight="1" fitToWidth="1" horizontalDpi="300" orientation="portrait" pageOrder="downThenOver" paperSize="1" scale="100" useFirstPageNumber="false" usePrinterDefaults="false" verticalDpi="300" />
+    <headerFooter differentFirst="false" differentOddEven="false">
+        <oddHeader></oddHeader>
+        <oddFooter></oddFooter>
+    </headerFooter>
+</worksheet>

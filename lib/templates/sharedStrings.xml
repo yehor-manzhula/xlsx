@@ -1,0 +1,8 @@
+{{{xmlDocType}}}
+<sst count="{{count}}" uniqueCount="{{uniqueCount}}" xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    {{#items}}
+    <si>
+        <t>{{.}}</t>
+    </si>
+    {{/items}}
+</sst>
