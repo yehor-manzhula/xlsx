@@ -1,0 +1,49 @@
+{
+  "name": "xlsx",
+  "description": "Office Open XML Generator using Node.js support Excel (xlsx). This module is for all frameworks and environments. No need for any commandline tool - this module is doing everything inside it.",
+  "version": "0.2.8",
+  "url": "https://github.com/egor-manjula/xlsx",
+  "keywords": [
+    "xlsx",
+    "office",
+    "microsoft",
+    "excel",
+    "Office Open XML",
+    "stream",
+    "generate",
+    "create",
+    "maker",
+    "generator",
+    "creator"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/egor-manjula/xlsx.git"
+  },
+  "bugs": {
+    "url": ""
+  },
+  "main": "lib/xlsx.coffee",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": ""
+  },
+  "dependencies": {
+    "archiver": "~0.9.1",
+    "underscore": "~1.4.4",
+    "mustache": "~0.8.1",
+    "moment": "^2.6.0"
+  },
+  "author": {
+    "name": "Egor Manjula",
+    "url": ""
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": ""
+    }
+  ]
+}
