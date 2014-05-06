@@ -1,5 +1,4 @@
 fs = require "fs"
-_  = require "underscore"
 
 moment   = require "moment"
 mustache = require "mustache"
@@ -225,7 +224,7 @@ class Xlsx
 
       sheetName = sheet.name or "Sheet" + (index + 1)
 
-      relationItem = _.find @_appRelations, (element)=>
+      [relationItem] = @_appRelations.filter (element)=>
         element.type is @APP_RELATIONS.WORKSHEET.TYPE and
         element.target is @APP_RELATIONS.WORKSHEET.TARGET(index + 1)
 

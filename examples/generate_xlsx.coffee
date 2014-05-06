@@ -62,4 +62,6 @@ sheet2.setCell "G102",
 
 xlsxDocument.generate __dirname + "/test.xlsx"
 
+# TODO: Implement setting style and data for row
+# with setRow method
 #sheet.setRow ( "3", [] , {style:"bold"})
