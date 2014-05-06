@@ -109,7 +109,7 @@ class Xlsx
     @_appRelations  = []
     @_mainRelations = []
 
-    @creator = "test"
+    @creator = "XLSX generator"
 
     @_addMainRelation @MAIN_RELATIONS.APP.TYPE,  @MAIN_RELATIONS.APP.TARGET
     @_addMainRelation @MAIN_RELATIONS.CORE.TYPE,      @MAIN_RELATIONS.CORE.TARGET
@@ -125,7 +125,7 @@ class Xlsx
   # Returns cell value
   # in case if value is object returns
   # value field
-  _getCellValue: (cell) ->
+  _getCellValue:(cell)->
     return cell["value"] if typeof(cell) is "object" and cell.value?
     cell
 
@@ -184,7 +184,7 @@ class Xlsx
 
   # Generates styles.xml
   # TODO: Remove result variable
-  _generateXlsStyles:(data) ->
+  _generateXlsStyles:->
     # Add to relation styles strings
     @_addAppRelation @APP_RELATIONS.STYLES.TYPE, @APP_RELATIONS.STYLES.TARGET
     @_addContentType @CONTENT_TYPES.STYLES.TYPE, @CONTENT_TYPES.STYLES.TARGET
@@ -197,13 +197,13 @@ class Xlsx
 
   #
   # Generates app.xml
-  _generateXlsApp:(data) ->
+  _generateXlsApp:->
 
     @_addContentType @CONTENT_TYPES.APP.TYPE, @CONTENT_TYPES.APP.TARGET
 
     result = mustache.render(appTemplate,
       xmlDocType: @XMLDOCTYPE
-      userName: @creator or "officegen"
+      userName:   @creator
       pagesCount: @sheets.length
       sheets: ((totalPages) ->
           result = []
@@ -221,7 +221,7 @@ class Xlsx
   # @param[in] data Ignored by this callback function.
   # @return Text string.
   #
-  _generateXlsWorkbook:() ->
+  _generateXlsWorkbook:->
     @_addContentType @CONTENT_TYPES.WORKBOOK.TYPE, @CONTENT_TYPES.WORKBOOK.TARGET
 
     sheets = []
@@ -249,20 +249,20 @@ class Xlsx
   # in case if value is object returns
   # style field
   # otherwise return default style
-  _getCellStyleId: (cell) ->
+  _getCellStyleId:(cell)->
     if typeof(cell) is "object" and cell.style?
       style = cell.style.toLowerCase()
       return @FONT_STYLES[style] if @FONT_STYLES[style]?
 
     @FONT_STYLES["default"]
 
-  _generateXlsSheets:(callback) ->
+  _generateXlsSheets:(callback)->
     @sheets.forEach (sheet, index)=>
       @_addAppRelation @APP_RELATIONS.WORKSHEET.TYPE, @APP_RELATIONS.WORKSHEET.TARGET(index + 1)
       @_addContentType @CONTENT_TYPES.WORKSHEET.TYPE, @CONTENT_TYPES.WORKSHEET.TARGET(index + 1)
       callback new Buffer(@_generateXlsSheet(sheet)), index
 
-  _generateXlsSheet: (sheet) ->
+  _generateXlsSheet:(sheet)->
     xSize = 0
     ySize = 0
     rows = []
@@ -365,16 +365,17 @@ class Xlsx
 
     new Buffer result
 
-  generate:(path) ->
-    output  = fs.createWriteStream path
+  generate:(path)->
+    output = fs.createWriteStream path
 
     output.on "close", ()->
       console.log "#{archive.pointer()} total bytes"
-      console.log "archiver has been finalized and the output file descriptor has closed."
+      console.log "XLSX generator has been finalized and the output file descriptor has closed."
 
     archive = archiver "zip"
 
     archive.on "error", (err)->
+      output.end()
       throw err
 
     archive.pipe output
@@ -382,16 +383,16 @@ class Xlsx
     archive.append @_generateXlsApp(), { name: "./docProps/app.xml" }
     archive.append @_generateCore(),   { name: "./xl/sharedStrings.xml" }
     archive.append @_generateSharedStrings(), { name: "./xl/sharedStrings.xml" }
-    archive.append @_generateXlsStyles(),     { name:"./xl/styles.xml" }
-    archive.append @_generateTheme(),         { name:"./xl/theme/theme1.xml" }
+    archive.append @_generateXlsStyles(),     { name: "./xl/styles.xml" }
+    archive.append @_generateTheme(),         { name: "./xl/theme/theme1.xml" }
 
     @_generateXlsSheets (buffer, index)->
-      archive.append buffer, { name: "./xl/worksheets/sheet#{index + 1}.xml"}
+      archive.append buffer, { name: "./xl/worksheets/sheet#{index + 1}.xml" }
 
-    archive.append @_generateXlsWorkbook(),  { name:"./xl/workbook.xml"}
-    archive.append @_generateContentTypes(), { name:"./[Content_Types].xml"}
-    archive.append @_generateAppRelations(),  { name:"./xl/_rels/workbook.xml.rels"}
-    archive.append @_generateMainRelations(), { name: "./_rels/.rels"}
+    archive.append @_generateXlsWorkbook(),  { name: "./xl/workbook.xml" }
+    archive.append @_generateContentTypes(), { name: "./[Content_Types].xml" }
+    archive.append @_generateAppRelations(),  { name: "./xl/_rels/workbook.xml.rels" }
+    archive.append @_generateMainRelations(), { name: "./_rels/.rels" }
 
     archive.finalize()
 
@@ -399,6 +400,7 @@ module.exports = Xlsx
 
 # test
 xlsxDocument = new Xlsx()
+xlsxDocument.creator = "XLSX Generator"
 
 # First sheet
 sheet = xlsxDocument.createSheet()
