@@ -339,7 +339,7 @@ class Xlsx
 
     result = mustache.render(coreTemplate,
       xmlDocType : @XMLDOCTYPE
-      creator : "Egor Manjula"
+      creator : @creator
       extraFields: []
       currentDateTime: moment().format("YYYY-MM-DD[T]HH[:]mm[:]ss[Z]") #"2014-04-28T20:36:44Z"
       revisionNumber: 1
