@@ -22,7 +22,7 @@ relationsTemplate = require "./templates/relations.xml"
 coreTemplate = require "./templates/core.xml"
 contentTypesTemplate = require "./templates/contentTypes.xml"
 
-archiver = require 'archiver'
+archiver = require "archiver"
 
 class Xlsx
 
@@ -153,7 +153,7 @@ class Xlsx
       items: @_sharedStrings
     )
 
-    result
+    new Buffer result
 
   _addAppRelation:(type, target)->
     @_appRelations.push
@@ -173,7 +173,7 @@ class Xlsx
       relations: @_appRelations
     )
 
-    result
+    new Buffer result
 
   _generateMainRelations:->
     result = mustache.render(relationsTemplate,
@@ -181,7 +181,7 @@ class Xlsx
       relations: @_mainRelations
     )
 
-    result
+    new Buffer result
 
   # Generates styles.xml
   # TODO: Remove result variable
@@ -194,7 +194,7 @@ class Xlsx
       xmlDocType: @XMLDOCTYPE
     )
 
-    result
+    new Buffer result
 
   #
   # Generates app.xml
@@ -217,7 +217,7 @@ class Xlsx
         )(@sheets.length)
     )
 
-    result
+    new Buffer result
 
   # @param[in] data Ignored by this callback function.
   # @return Text string.
@@ -243,7 +243,8 @@ class Xlsx
       xmlDocType: @XMLDOCTYPE
       sheets: sheets
     )
-    result
+
+    new Buffer result
 
   # Returns cell style
   # in case if value is object returns
@@ -256,13 +257,11 @@ class Xlsx
 
     @FONT_STYLES["default"]
 
-  _generateXlsSheets: ->
+  _generateXlsSheets:(callback) ->
     @sheets.forEach (sheet, index)=>
-      fs.writeFileSync "./tmp/xl/worksheets/sheet#{index + 1}.xml", @_generateXlsSheet(sheet)
-
-      #TODO: Improve pathes issue
       @_addAppRelation @APP_RELATIONS.WORKSHEET.TYPE, @APP_RELATIONS.WORKSHEET.TARGET(index + 1)
       @_addContentType @CONTENT_TYPES.WORKSHEET.TYPE, @CONTENT_TYPES.WORKSHEET.TARGET(index + 1)
+      callback new Buffer(@_generateXlsSheet(sheet)), index
 
   _generateXlsSheet: (sheet) ->
     xSize = 0
@@ -288,37 +287,38 @@ class Xlsx
       row.forEach (column, columnIndex) =>
         columnValue = @_getCellValue column
 
-        if typeof columnValue isnt "undefined"
-          value = undefined
-          type = @TYPES_CODES["default"]
+        return if typeof(columnValue) is "undefined"
 
-          cellValueType = typeof columnValue
-          type = @TYPES_CODES[cellValueType] if @TYPES_CODES[cellValueType]
+        value = undefined
+        type = @TYPES_CODES["default"]
 
-          switch typeof columnValue
+        cellValueType = typeof columnValue
+        type = @TYPES_CODES[cellValueType] if @TYPES_CODES[cellValueType]?
 
-            when "number"
-              value = columnValue
+        switch typeof columnValue
 
-            when "string"
-              # Calculate row height
-              # depend on max lines in cell
-              # TODO: move height calculation to another method
-              candidate = columnValue.split("\n").length
-              rowLines = Math.max rowLines, candidate
-              currentRow.height = rowLines * 15
+          when "number"
+            value = columnValue
 
-              value = @_sharedStrings.indexOf columnValue
+          when "string"
+            # Calculate row height
+            # depend on max lines in cell
+            # TODO: move height calculation to another method
+            candidate = columnValue.split("\n").length
+            rowLines = Math.max rowLines, candidate
+            currentRow.height = rowLines * 15
 
-          currentColumn =
-            cellName: "#{Sheet::numberToCell(columnIndex)}#{rowIndex + 1}"
-            type: type
-            value: value
-            styleId: @_getCellStyleId(column)
+            value = @_sharedStrings.indexOf columnValue
 
-          currentRow.columns.push currentColumn
+        currentColumn =
+          cellName: "#{Sheet::numberToCell(columnIndex)}#{rowIndex + 1}"
+          type: type
+          value: value
+          styleId: @_getCellStyleId(column)
 
-        rows.push currentRow
+        currentRow.columns.push currentColumn
+
+      rows.push currentRow
 
     result = mustache.render(sheetTemplate,
       xmlDocType: @XMLDOCTYPE
@@ -326,27 +326,31 @@ class Xlsx
       rows: rows
     )
 
-    result
+    new Buffer result
 
   _generateTheme:->
     # Add to relation themes
     @_addAppRelation @APP_RELATIONS.THEME.TYPE, @APP_RELATIONS.THEME.TARGET
     @_addContentType @CONTENT_TYPES.THEME.TYPE, @CONTENT_TYPES.THEME.TARGET(1)
 
-    mustache.render(themeTemplate,
+    result = mustache.render(themeTemplate,
       xmlDocType: @XMLDOCTYPE
     )
+
+    new Buffer result
 
   _generateCore:->
     @_addContentType @CONTENT_TYPES.CORE.TYPE, @CONTENT_TYPES.CORE.TARGET
 
-    mustache.render(coreTemplate,
+    result = mustache.render(coreTemplate,
       xmlDocType : @XMLDOCTYPE
       creator : "Egor Manjula"
       extraFields: []
       currentDateTime: moment().format("YYYY-MM-DD[T]HH[:]mm[:]ss[Z]") #"2014-04-28T20:36:44Z"
       revisionNumber: 1
     )
+
+    new Buffer result
 
   # TODO: Finish this part
   _addContentType:(type, target)->
@@ -355,55 +359,40 @@ class Xlsx
       target: target
 
   _generateContentTypes:->
-    mustache.render(contentTypesTemplate,
+    result = mustache.render(contentTypesTemplate,
       xmlDocType  : @XMLDOCTYPE
       contentTypes: @_contentTypes
     )
 
-  generate:() ->
+    new Buffer result
 
-    # TODO: Temporary folders
-    fs.mkdirSync "./tmp"       unless fs.existsSync "./tmp"
-    fs.mkdirSync "./tmp/xl"    unless fs.existsSync "./tmp/xl"
-    fs.mkdirSync "./tmp/xl/theme" unless fs.existsSync "./tmp/xl/theme"
-    fs.mkdirSync "./tmp/xl/_rels" unless fs.existsSync "./tmp/xl/_rels"
-    fs.mkdirSync "./tmp/xl/worksheets" unless fs.existsSync "./tmp/xl/worksheets"
+  generate:(path) ->
+    output  = fs.createWriteStream path
 
-    fs.mkdirSync "./tmp/_rels" unless fs.existsSync "./tmp/_rels"
-    fs.mkdirSync "./tmp/docProps" unless fs.existsSync "./tmp/docProps"
+    output.on "close", ()->
+      console.log "#{archive.pointer()} total bytes"
+      console.log "archiver has been finalized and the output file descriptor has closed."
 
-    fs.writeFileSync "./tmp/docProps/app.xml",  @_generateXlsApp()
-    fs.writeFileSync "./tmp/docProps/core.xml", @_generateCore()
+    archive = archiver "zip"
 
-    fs.writeFileSync "./tmp/xl/sharedStrings.xml", @_generateSharedStrings()
-
-    fs.writeFileSync "./tmp/xl/styles.xml", @_generateXlsStyles()
-
-    fs.writeFileSync "./tmp/xl/theme/theme1.xml", @_generateTheme()
-
-    @_generateXlsSheets()
-    fs.writeFileSync "./tmp/xl/workbook.xml", @_generateXlsWorkbook()
-
-    fs.writeFileSync "./tmp/[Content_Types].xml", @_generateContentTypes()
-
-    fs.writeFileSync "./tmp/xl/_rels/workbook.xml.rels", @_generateAppRelations()
-    fs.writeFileSync "./tmp/_rels/.rels", @_generateMainRelations()
-
-
-    output = fs.createWriteStream __dirname + '/bulk-output.xlsx'
-    archive = archiver 'zip'
-
-    output.on 'close', ()->
-      console.log archive.pointer() + ' total bytes'
-      console.log 'archiver has been finalized and the output file descriptor has closed.'
-
-    archive.on 'error', (err)->
+    archive.on "error", (err)->
       throw err
 
     archive.pipe(output)
-    archive.bulk([
-      { expand: true, cwd: './tmp', src: ['_rels/.rels']},
-      { expand: true, cwd: './tmp', src: ['**/*'] }])
+
+    archive.append @_generateXlsApp(), { name: "./docProps/app.xml" }
+    archive.append @_generateCore(),   { name: "./xl/sharedStrings.xml" }
+    archive.append @_generateSharedStrings(), { name: "./xl/sharedStrings.xml" }
+    archive.append @_generateXlsStyles(),     { name:"./xl/styles.xml" }
+    archive.append @_generateTheme(),         { name:"./xl/theme/theme1.xml" }
+
+    @_generateXlsSheets (buffer, index)->
+      archive.append buffer, { name: "./xl/worksheets/sheet#{index + 1}.xml"}
+
+    archive.append @_generateXlsWorkbook(),  { name:"./xl/workbook.xml"}
+    archive.append @_generateContentTypes(), { name:"./[Content_Types].xml"}
+    archive.append @_generateAppRelations(),  { name:"./xl/_rels/workbook.xml.rels"}
+    archive.append @_generateMainRelations(), { name: "./_rels/.rels"}
 
     archive.finalize()
 
@@ -420,20 +409,20 @@ sheet.name = "Excel 1"
 sheet.data[0] = []
 sheet.data[0][0] = 1
 sheet.data[1] = []
-sheet.data[1][3] = {value:'abc', style:'BOLD'}
-sheet.data[1][4] = {value:'More', style: 'bOld'}
-sheet.data[1][5] = 'Text fffdaffdfdadfasdfasdfaf'
-sheet.data[1][6] = 'Here'
+sheet.data[1][3] = {value:"abc", style:"BOLD"}
+sheet.data[1][4] = {value:"More", style: "bOld"}
+sheet.data[1][5] = "Text fffdaffdfdadfasdfasdfaf"
+sheet.data[1][6] = "Here"
 sheet.data[2] = []
-sheet.data[2][5] = 'abc'
+sheet.data[2][5] = "abc"
 sheet.data[2][6] = 900
 sheet.data[6] = []
 sheet.data[6][2] = 1972
 
-sheet.setCell 'E7', 340
-sheet.setCell 'I1', -3
-sheet.setCell 'I2', 31.12
-sheet.setCell 'G102', {value:'Hello World!', style:'bold'}
+sheet.setCell "E7", 340
+sheet.setCell "I1", -3
+sheet.setCell "I2", 31.12
+sheet.setCell "G102", {value:"Hello World!", style:"bold"}
 
 # Second sheet
 sheet2 = xlsxDocument.createSheet()
@@ -468,6 +457,6 @@ sheet2.setCell "G102",
   value: "Hello World!"
   style: "bold"
 
-xlsxDocument.generate()
+xlsxDocument.generate __dirname + "/test.xlsx"
 
 #sheet.setRow ( "3", [] , {style:"bold"})
