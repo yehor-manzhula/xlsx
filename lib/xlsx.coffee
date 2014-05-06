@@ -3,6 +3,7 @@ fs = require "fs"
 moment   = require "moment"
 mustache = require "mustache"
 archiver = require "archiver"
+deferred = require "when"
 
 Sheet = require "./sheet"
 
@@ -361,35 +362,36 @@ class Xlsx
     new Buffer result
 
   generate:(path)->
-    output = fs.createWriteStream path
+    deferred.promise (resolve, reject)=>
 
-    output.on "close", ()->
-      console.log "#{archive.pointer()} total bytes"
-      console.log "XLSX generator has been finalized and the output file descriptor has closed."
+      output = fs.createWriteStream path
 
-    archive = archiver "zip"
+      output.on "close", ()->
+        resolve archive.pointer()
 
-    archive.on "error", (err)->
-      output.end()
-      throw err
+      archive = archiver "zip"
 
-    archive.pipe output
+      archive.on "error", (err)->
+        output.end()
+        reject err
 
-    archive.append @_generateXlsApp(), { name: "./docProps/app.xml" }
-    archive.append @_generateCore(),   { name: "./xl/sharedStrings.xml" }
-    archive.append @_generateSharedStrings(), { name: "./xl/sharedStrings.xml" }
-    archive.append @_generateXlsStyles(),     { name: "./xl/styles.xml" }
-    archive.append @_generateTheme(),         { name: "./xl/theme/theme1.xml" }
+      archive.pipe output
 
-    @_generateXlsSheets (buffer, index)->
-      archive.append buffer, { name: "./xl/worksheets/sheet#{index + 1}.xml" }
+      archive.append @_generateXlsApp(), { name: "./docProps/app.xml" }
+      archive.append @_generateCore(),   { name: "./xl/sharedStrings.xml" }
+      archive.append @_generateSharedStrings(), { name: "./xl/sharedStrings.xml" }
+      archive.append @_generateXlsStyles(),     { name: "./xl/styles.xml" }
+      archive.append @_generateTheme(),         { name: "./xl/theme/theme1.xml" }
 
-    archive.append @_generateXlsWorkbook(),  { name: "./xl/workbook.xml" }
-    archive.append @_generateContentTypes(), { name: "./[Content_Types].xml" }
-    archive.append @_generateAppRelations(),  { name: "./xl/_rels/workbook.xml.rels" }
-    archive.append @_generateMainRelations(), { name: "./_rels/.rels" }
+      @_generateXlsSheets (buffer, index)->
+        archive.append buffer, { name: "./xl/worksheets/sheet#{index + 1}.xml" }
 
-    archive.finalize()
+      archive.append @_generateXlsWorkbook(),  { name: "./xl/workbook.xml" }
+      archive.append @_generateContentTypes(), { name: "./[Content_Types].xml" }
+      archive.append @_generateAppRelations(),  { name: "./xl/_rels/workbook.xml.rels" }
+      archive.append @_generateMainRelations(), { name: "./_rels/.rels" }
+
+      archive.finalize()
 
 module.exports = Xlsx
 

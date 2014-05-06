@@ -60,7 +60,13 @@ sheet2.setCell "G102",
   value: "Hello World!"
   style: "bold"
 
-xlsxDocument.generate __dirname + "/test.xlsx"
+generateDeferred = xlsxDocument.generate __dirname + "/test.xlsx"
+
+generateDeferred.then (totalSize) ->
+  console.log "#{totalSize} total bytes"
+  console.log "XLSX generator has been finalized and the output file descriptor has closed."
+, (error)->
+  console.error "XLSX generator has been failed with error #{error}"
 
 # TODO: Implement setting style and data for row
 # with setRow method
