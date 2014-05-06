@@ -3,6 +3,7 @@ _  = require "underscore"
 
 moment   = require "moment"
 mustache = require "mustache"
+archiver = require "archiver"
 
 Sheet = require "./sheet"
 ObservableMixin = require "./mixins/observableMixin"
@@ -12,17 +13,15 @@ require.extensions[".xml"] = (module, filename)->
   module.exports = fs.readFileSync filename, "utf8"
 
 #Templates
+coreTemplate   = require "./templates/core.xml"
 appTemplate    = require "./templates/app.xml"
+themeTemplate  = require "./templates/theme.xml"
 sheetTemplate  = require "./templates/sheet.xml"
 stylesTemplate = require "./templates/styles.xml"
-workBookTemplate = require "./templates/workbook.xml"
-sharedStringsTemplate = require "./templates/sharedStrings.xml"
-themeTemplate = require "./templates/theme.xml"
+workBookTemplate  = require "./templates/workbook.xml"
 relationsTemplate = require "./templates/relations.xml"
-coreTemplate = require "./templates/core.xml"
-contentTypesTemplate = require "./templates/contentTypes.xml"
-
-archiver = require "archiver"
+contentTypesTemplate  = require "./templates/contentTypes.xml"
+sharedStringsTemplate = require "./templates/sharedStrings.xml"
 
 class Xlsx
 
@@ -127,7 +126,7 @@ class Xlsx
   # in case if value is object returns
   # value field
   _getCellValue: (cell) ->
-    return cell["value"] if typeof cell is "object" and cell.value?
+    return cell["value"] if typeof(cell) is "object" and cell.value?
     cell
 
   _generateSharedStrings:->
@@ -378,7 +377,7 @@ class Xlsx
     archive.on "error", (err)->
       throw err
 
-    archive.pipe(output)
+    archive.pipe output
 
     archive.append @_generateXlsApp(), { name: "./docProps/app.xml" }
     archive.append @_generateCore(),   { name: "./xl/sharedStrings.xml" }
