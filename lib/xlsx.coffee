@@ -6,7 +6,6 @@ mustache = require "mustache"
 archiver = require "archiver"
 
 Sheet = require "./sheet"
-ObservableMixin = require "./mixins/observableMixin"
 
 # Extend require to load xml files as string
 require.extensions[".xml"] = (module, filename)->
@@ -24,9 +23,6 @@ contentTypesTemplate  = require "./templates/contentTypes.xml"
 sharedStringsTemplate = require "./templates/sharedStrings.xml"
 
 class Xlsx
-
-  # @mixes EventDispatcherMixin
-  _.extend @prototype, ObservableMixin
 
   XMLDOCTYPE: "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
 

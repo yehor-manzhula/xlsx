@@ -51,7 +51,6 @@ class Sheet
 
     outCell
 
-
   setCell:(position, data)->
     cellPositionNumber = Sheet::cellToNumber position, true
     @data[cellPositionNumber.row] = []  unless @data[cellPositionNumber.row]
