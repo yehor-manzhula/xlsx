@@ -71,4 +71,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 <a name="Credit"/>
 ## Credit: ##
-- Inspired with Officegen nodejs library https://github.com/vtloc/officegen
+- Inspired with Officegen nodejs library:
+ https://github.com/vtloc/officegen
+ https://github.com/Ziv-Barber/officegen
