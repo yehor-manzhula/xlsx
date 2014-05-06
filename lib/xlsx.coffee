@@ -9,7 +9,7 @@ Sheet = require "./sheet"
 
 # Extend require to load xml files as string
 require.extensions[".xml"] = (module, filename)->
-  module.exports = fs.readFileSync filename
+  module.exports = fs.readFileSync filename, "utf8"
 
 #Templates
 coreTemplate   = require "./templates/core.xml"
