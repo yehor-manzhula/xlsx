@@ -39,7 +39,7 @@ This module is depending on:
 ## Examples: ##
 - examples/generate_xlsx.js - Example how to create Excel 2007 sheet and save it into file.
 
-<a name="Todo"/>
+<a name="ToDo"/>
 ## Features todo: ##
 - Implement other text styles
 
